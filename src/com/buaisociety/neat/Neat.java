@@ -4,11 +4,7 @@ import com.buaisociety.neat.genome.ConnectionGene;
 import com.buaisociety.neat.genome.Genome;
 import com.buaisociety.neat.genome.NodeGene;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * The manging class for the NEAT algorithm. This class is responsible for
@@ -150,8 +146,41 @@ public class Neat {
     }
 
     public void evolve() {
+        this.clients.sort(Comparator.comparingDouble(Client::getScore));
+
         // TODO: Kill off the top half of the population
+        int killNum=(int)(0.90 * clients.size());
+        List<Client> survivors=new ArrayList<>();
+
+        for(int i=0;i<clients.size();i++){
+            Client client=clients.get(i);
+            boolean shouldKill=i<killNum;
+            if(shouldKill) {
+                client.tryKill(); //to not quickly kill off clients
+            }
+            //#survivors should have their networks copied
+            if(client.getGenome() !=  null){
+                survivors.add(client);
+            }
+        }
+        //Bring them back to life
+        for(int i=0;i<clients.size();i++){
+            Client client=clients.get(i);
+
+            if(client.getGenome()==null){
+                Client parent=survivors.get(random.nextInt(survivors.size()));
+                Genome revived=parent.getGenome().clone();
+                revived.mutate();
+
+                //Actually revive our client
+                client.setGenome(revived);
+            }
+            else{
+                client.mutate();
+            }
+        }
         // TODO: For each dead client, create a new client with a mutated genome
+
     }
 
 }
